@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/branding.dart';
 import '../core/api_client.dart';
+import '../core/sync_service.dart';
 import '../models/exam.dart';
 import 'exam_detail_screen.dart';
 
@@ -25,6 +26,8 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   bool _showUpcoming = false;
   bool _showPast = false;
+  List<int> _pendingSync = const [];
+  String? _syncNote;
 
   @override
   void initState() {
@@ -37,6 +40,14 @@ class _ExamsScreenState extends State<ExamsScreen> {
       _loading = true;
       _error = null;
     });
+    // Feature 4: push any offline-queued submissions before listing exams,
+    // so attempts/counters on the server are up to date.
+    final sync = SyncService(widget.api);
+    final (synced, failed) = await sync.flush();
+    _pendingSync = await SyncService.pendingIds();
+    _syncNote = synced > 0
+        ? '$synced offline submission${synced == 1 ? '' : 's'} synced.'
+        : null;
     final res = await widget.api.get('/cbt/exams');
     if (!mounted) return;
     if (!res.success) {
@@ -87,6 +98,44 @@ class _ExamsScreenState extends State<ExamsScreen> {
     }
 
     final children = <Widget>[];
+
+    if (_syncNote != null) {
+      children.add(Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE2F3E9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(children: [
+          Icon(Icons.cloud_done, size: 18, color: Branding.successColor),
+          const SizedBox(width: 8),
+          Expanded(child: Text(_syncNote!,
+              style: const TextStyle(fontSize: 13))),
+        ]),
+      ));
+    }
+    if (_pendingSync.isNotEmpty) {
+      children.add(Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4D6),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(children: [
+          const Icon(Icons.cloud_upload_outlined,
+              size: 18, color: Color(0xFF8A6D00)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${_pendingSync.length} exam submission${_pendingSync.length == 1 ? '' : 's'} waiting to sync — will send automatically when online.',
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ]),
+      ));
+    }
 
     // --- OPEN NOW ---
     if (_open.isNotEmpty) {

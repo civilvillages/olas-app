@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/branding.dart';
 import '../core/api_client.dart';
 import '../core/exam_cache.dart';
+import '../core/sync_service.dart';
 import '../models/exam.dart';
 import 'exam_take_screen.dart';
 
@@ -20,8 +21,29 @@ class ExamDetailScreen extends StatefulWidget {
 class _ExamDetailScreenState extends State<ExamDetailScreen> {
   bool _busy = false;
   String _busyLabel = '';
+  bool _pendingSyncBlock = false;
 
   Exam get exam => widget.exam;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPending();
+  }
+
+  Future<void> _checkPending() async {
+    // Block retakes while a submission for this exam is queued offline:
+    // the server hasn't seen it yet, so its attempt counter is stale.
+    final ids = await SyncService.pendingIds();
+    for (final id in ids) {
+      final pkg = await ExamCache.loadPackage(id);
+      final exId = ((pkg?['exam'] as Map?)?['id'] as num?)?.toInt();
+      if (exId == exam.id) {
+        if (mounted) setState(() => _pendingSyncBlock = true);
+        return;
+      }
+    }
+  }
 
   Future<void> _startAndDownload() async {
     // Password gate first, if the exam needs one.
@@ -169,21 +191,27 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
                   backgroundColor: Branding.primaryColor,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: (exam.canStart && !_busy) ? _startAndDownload : null,
+                onPressed: (exam.canStart && !_busy && !_pendingSyncBlock) ? _startAndDownload : null,
                 icon: const Icon(Icons.download_outlined),
-                label: Text(exam.hasInProgress
-                    ? 'Resume exam'
-                    : (exam.canStart ? 'Download & start' : 'Not available')),
+                label: Text(_pendingSyncBlock
+                    ? 'Waiting to sync'
+                    : exam.hasInProgress
+                        ? 'Resume exam'
+                        : (exam.canStart ? 'Download & start' : 'Not available')),
               ),
             ),
             const SizedBox(height: 8),
             Center(
               child: Text(
-                exam.canStart
-                    ? 'Once downloaded, the exam runs even with no signal.'
-                    : (label == 'Completed'
-                        ? 'You have completed this exam.'
-                        : 'This exam is not open for you right now.'),
+                _pendingSyncBlock
+                    ? 'You already submitted this exam offline. It will sync '
+                        'automatically when you are online, and cannot be '
+                        'retaken while a submission is waiting.'
+                    : exam.canStart
+                        ? 'Once downloaded, the exam runs even with no signal.'
+                        : (label == 'Completed'
+                            ? 'You have completed this exam.'
+                            : 'This exam is not open for you right now.'),
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5),
                 textAlign: TextAlign.center,
               ),
