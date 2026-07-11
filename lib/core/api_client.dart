@@ -121,8 +121,9 @@ class ApiClient {
         meta: const {},
         statusCode: 0,
         errorCode: 'network_error',
-      errorMessage:
-            'Could not reach the server. [debug: ${e.toString()}]',
+        errorMessage:
+            'No internet connection. Your work is saved on this phone — '
+            'reconnect and try again.',
       );
     }
   }
