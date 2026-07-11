@@ -7,6 +7,29 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
 void main() {
+  // In release builds a widget-tree crash renders as a blank/grey screen.
+  // Show the actual error text instead, so problems are visible and reportable.
+  ErrorWidget.builder = (FlutterErrorDetails details) => Material(
+        color: const Color(0xFFFFF3F3),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Something went wrong',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB00020))),
+                const SizedBox(height: 8),
+                Text('${details.exception}',
+                    style: const TextStyle(fontSize: 13)),
+              ],
+            ),
+          ),
+        ),
+      );
   runApp(const OlasApp());
 }
 
