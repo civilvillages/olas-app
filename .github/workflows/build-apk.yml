@@ -1,5 +1,8 @@
 name: Build OLAS APK
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ main, master ]
@@ -57,9 +60,21 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
-      - name: Upload the APK
+      - name: Upload the APK (artifact backup)
         uses: actions/upload-artifact@v4
         with:
           name: olas-app-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Publish to the "latest" Release (stable phone download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: OLAS App (latest build)
+          body: |
+            Newest OLAS app build. Open this page on your phone and tap
+            app-release.apk to install. Each push replaces it with the newest APK.
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
