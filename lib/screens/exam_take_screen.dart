@@ -24,8 +24,8 @@ class ExamTakeScreen extends StatefulWidget {
 }
 
 class _ExamTakeScreenState extends State<ExamTakeScreen> {
-  late List<dynamic> _questions;
-  late Map<String, dynamic> _answers; // link_id -> answer
+  List<dynamic> _questions = const [];
+  Map<String, dynamic> _answers = {}; // link_id -> answer
   int _index = 0;
 
   Timer? _ticker;
@@ -47,8 +47,9 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
   }
 
   Future<void> _bootstrap() async {
-    // resume any locally-saved answers
-    _answers = await ExamCache.loadAnswers(widget.attemptId);
+    // resume any locally-saved answers (merge into the already-live map)
+    final cached = await ExamCache.loadAnswers(widget.attemptId);
+    _answers.addAll(cached);
     // if the package brought server-side saved answers, merge them in
     final saved = (widget.package['saved_answers'] as Map?)?.cast<String, dynamic>();
     if (saved != null) {
@@ -62,8 +63,8 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
 
   void _startTimer() {
     final attempt = (widget.package['attempt'] as Map?) ?? const {};
-    final endsAtStr = attempt['ends_at'] as String?;
-    final serverNowStr = attempt['server_time'] as String?;
+    final endsAtStr = attempt['deadline'] as String?;
+    final serverNowStr = attempt['server_now'] as String?;
     DateTime endsAt;
     DateTime base;
     try {
@@ -72,9 +73,9 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
           ? DateTime.parse(serverNowStr).toUtc()
           : DateTime.now().toUtc();
     } catch (_) {
-      // fallback: duration_minutes from now
-      final mins = (attempt['duration_minutes'] as num?)?.toInt() ?? 30;
-      endsAt = DateTime.now().toUtc().add(Duration(minutes: mins));
+      // fallback: remaining_seconds from now
+      final secs = (attempt['remaining_seconds'] as num?)?.toInt() ?? 1800;
+      endsAt = DateTime.now().toUtc().add(Duration(seconds: secs));
       base = DateTime.now().toUtc();
     }
     // offset between device clock and server clock at load
@@ -231,7 +232,7 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
         ]),
         const SizedBox(height: 12),
         Text(
-          _stripHtml((q['question_html'] as String?) ?? ''),
+          _stripHtml((q['text'] as String?) ?? ''),
           style: const TextStyle(fontSize: 17, height: 1.4),
         ),
         const SizedBox(height: 20),
@@ -240,8 +241,11 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
     );
   }
 
+  bool _isTheory(String t) => t == 'theory' || t == 'essay';
+  bool _isMulti(String t) => t == 'multi' || t == 'multiple_response' || t == 'multiple_select';
+
   List<Widget> _options(dynamic q, String id, String type) {
-    if (type == 'theory') {
+    if (_isTheory(type)) {
       final ctrl = _theoryControllers.putIfAbsent(
         id,
         () => TextEditingController(text: (_answers[id] as String?) ?? ''),
@@ -261,12 +265,12 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
     }
 
     final options = (q['options'] as List?) ?? const [];
-    final multi = type == 'multi';
+    final multi = _isMulti(type);
     final current = _answers[id];
 
     return options.map<Widget>((opt) {
-      final idx = (opt['idx'] as num).toInt();
-      final text = _stripHtml((opt['html'] as String?) ?? '');
+      final idx = (opt['original_idx'] as num).toInt();
+      final text = _stripHtml((opt['text'] as String?) ?? '');
       final bool selected = multi
           ? (current is List && current.contains(idx))
           : (current == idx);
@@ -398,13 +402,13 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
       final a = _answers['$linkId'];
       if (a == null) continue;
       final item = <String, dynamic>{'link_id': linkId};
-      if (type == 'theory') {
+      if (_isTheory(type)) {
         if (a is String && a.trim().isNotEmpty) {
           item['answer_text'] = a;
         } else {
           continue;
         }
-      } else if (type == 'multi') {
+      } else if (_isMulti(type)) {
         if (a is List && a.isNotEmpty) {
           item['selected_original_idxs'] = a.map((e) => e as int).toList();
         } else {
