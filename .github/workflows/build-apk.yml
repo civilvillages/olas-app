@@ -38,6 +38,19 @@ jobs:
             sed -i 's/minSdk = .*/minSdk = 21/' "$g" || true
           fi
 
+      - name: Ensure INTERNET permission
+        run: |
+          m=android/app/src/main/AndroidManifest.xml
+          if [ -f "$m" ]; then
+            if ! grep -q 'android.permission.INTERNET' "$m"; then
+              sed -i 's#\(<manifest[^>]*>\)#\1\n    <uses-permission android:name="android.permission.INTERNET"/>#' "$m"
+              echo "INTERNET permission added"
+            else
+              echo "INTERNET permission already present"
+            fi
+            head -8 "$m"
+          fi
+
       - name: Get packages
         run: flutter pub get
 
