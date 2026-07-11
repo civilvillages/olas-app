@@ -1,0 +1,52 @@
+name: Build OLAS APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Create android project files
+        run: flutter create . --platforms=android
+
+      - name: Ensure Android minSdk
+        run: |
+          f=android/app/build.gradle
+          if [ -f "$f" ]; then
+            sed -i 's/minSdkVersion .*/minSdkVersion 21/' "$f" || true
+            sed -i 's/minSdk = .*/minSdk = 21/' "$f" || true
+          fi
+          g=android/app/build.gradle.kts
+          if [ -f "$g" ]; then
+            sed -i 's/minSdk = .*/minSdk = 21/' "$g" || true
+          fi
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: olas-app-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
