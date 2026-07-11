@@ -179,7 +179,7 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
                   Text(_fmt(_remaining),
                       style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.bold)),
                 ]),
               ),
             ),
