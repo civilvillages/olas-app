@@ -1,5 +1,20 @@
 /// The signed-in user, as returned by /auth/login and /auth/me.
 class AppUser {
+
+  // Server returns role as a nested object {"slug":..,"name":..}; older shape
+  // used flat role_slug/role_name. Handle both.
+  static String? _roleSlug(Map<String, dynamic> j) {
+    final r = j['role'];
+    if (r is Map) return r['slug'] as String?;
+    return (j['role_slug'] ?? (r is String ? r : null)) as String?;
+  }
+
+  static String? _roleName(Map<String, dynamic> j) {
+    final r = j['role'];
+    if (r is Map) return r['name'] as String?;
+    return j['role_name'] as String?;
+  }
+
   final int id;
   final String? username;
   final String? email;
@@ -25,7 +40,6 @@ class AppUser {
       .join(' ')
       .trim();
 
-  /// Initials for the avatar placeholder.
   String get initials {
     final a = firstName.trim().isNotEmpty ? firstName.trim()[0] : '';
     final b = lastName.trim().isNotEmpty ? lastName.trim()[0] : '';
@@ -44,8 +58,8 @@ class AppUser {
         email: j['email'] as String?,
         firstName: (j['first_name'] as String?) ?? '',
         lastName: (j['last_name'] as String?) ?? '',
-        roleSlug: (j['role_slug'] ?? j['role']) as String?,
-        roleName: j['role_name'] as String?,
+        roleSlug: _roleSlug(j),
+        roleName: _roleName(j),
         profilePhoto: j['profile_photo'] as String?,
       );
 
