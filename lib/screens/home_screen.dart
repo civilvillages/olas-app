@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/branding.dart';
 import '../state/auth_state.dart';
+import 'exams_screen.dart';
 
-/// A temporary landing screen so the first build has somewhere to go after
-/// login. The real home (My Exams, etc.) replaces this in the next delivery.
+/// Home. Students land on My Exams; other roles see a welcome card for now
+/// (their dedicated screens arrive in later builds).
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -12,12 +13,13 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final user = auth.user;
+    final isStudent = user?.isStudent ?? false;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Branding.primaryColor,
         foregroundColor: Colors.white,
-        title: Text(Branding.schoolName),
+        title: Text(isStudent ? 'My Exams' : Branding.schoolName),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -26,50 +28,52 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: Branding.primaryColor,
-                child: Text(
-                  user?.initials ?? '?',
+      body: isStudent
+          ? ExamsScreen(api: auth.api)
+          : _welcome(context, user),
+    );
+  }
+
+  Widget _welcome(BuildContext context, user) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 42,
+              backgroundColor: Branding.primaryColor,
+              child: Text(user?.initials ?? '?',
                   style: const TextStyle(
                       fontSize: 32,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 16),
+            Text('Welcome, ${user?.fullName ?? 'there'}!',
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            if (user?.roleName != null)
+              Chip(
+                label: Text(user!.roleName!),
+                backgroundColor: Branding.primaryColor.withOpacity(0.1),
+              ),
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'You are signed in as ${user?.roleName ?? 'staff'}.\n\n'
+                  'Your dashboard is coming in an upcoming build. The student '
+                  'exam experience is being built first.',
+                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Welcome, ${user?.fullName ?? 'there'}!',
-                style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              if (user?.roleName != null)
-                Chip(
-                  label: Text(user!.roleName!),
-                  backgroundColor: Branding.primaryColor.withOpacity(0.1),
-                ),
-              const SizedBox(height: 24),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    'You are signed in. \n\n'
-                    'This is a placeholder home screen — the next build adds '
-                    'My Exams, taking exams offline, results and more.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
