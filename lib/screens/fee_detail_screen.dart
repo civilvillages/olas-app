@@ -5,9 +5,10 @@ import '../core/api_client.dart';
 /// Feature 6 — one invoice: line items, payments received, balance.
 class FeeDetailScreen extends StatefulWidget {
   const FeeDetailScreen(
-      {super.key, required this.api, required this.invoiceId});
+      {super.key, required this.api, required this.invoiceId, this.payInfo});
   final ApiClient api;
   final int invoiceId;
+  final Map<String, dynamic>? payInfo;
 
   @override
   State<FeeDetailScreen> createState() => _FeeDetailScreenState();
@@ -39,6 +40,102 @@ class _FeeDetailScreenState extends State<FeeDetailScreen> {
         _error = res.friendlyError;
       }
     });
+  }
+
+  Future<void> _claimForm() async {
+    final amountCtl = TextEditingController();
+    final refCtl = TextEditingController();
+    final noteCtl = TextEditingController();
+    String method = 'bank_transfer';
+    DateTime paidOn = DateTime.now();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('I have paid'),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextField(
+                controller: amountCtl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    labelText: 'Amount paid (₦)', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: method,
+                decoration: const InputDecoration(
+                    labelText: 'Payment method', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'bank_transfer', child: Text('Bank transfer')),
+                  DropdownMenuItem(value: 'bank_deposit', child: Text('Bank deposit (teller)')),
+                  DropdownMenuItem(value: 'pos', child: Text('POS')),
+                  DropdownMenuItem(value: 'cash', child: Text('Cash at school')),
+                ],
+                onChanged: (v) => setSt(() => method = v ?? 'bank_transfer'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: refCtl,
+                decoration: const InputDecoration(
+                    labelText: 'Reference / teller number',
+                    border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: paidOn,
+                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime.now(),
+                  );
+                  if (d != null) setSt(() => paidOn = d);
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                      labelText: 'Date paid', border: OutlineInputBorder()),
+                  child: Text('${paidOn.day}/${paidOn.month}/${paidOn.year}'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: noteCtl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                    labelText: 'Note (optional)', border: OutlineInputBorder()),
+              ),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Send to school')),
+          ],
+        ),
+      ),
+    );
+    if (submitted != true || !mounted) return;
+
+    final amount = double.tryParse(amountCtl.text.trim()) ?? 0;
+    final iso = '${paidOn.year}-${paidOn.month.toString().padLeft(2, '0')}-${paidOn.day.toString().padLeft(2, '0')}';
+    final res = await widget.api.post('/me/fees/${widget.invoiceId}/claim', body: {
+      'amount': amount,
+      'method': method,
+      'reference': refCtl.text.trim(),
+      'paid_on': iso,
+      'note': noteCtl.text.trim(),
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(res.success
+          ? '${res.data['message'] ?? 'The school has been notified.'}'
+          : res.friendlyError),
+      duration: const Duration(seconds: 4),
+    ));
+    if (res.success) _load();
   }
 
   String _naira(num n) {
@@ -117,6 +214,25 @@ class _FeeDetailScreenState extends State<FeeDetailScreen> {
                       : Colors.red.shade700)),
         ]),
       ),
+      const SizedBox(height: 10),
+
+      if (!settled)
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Branding.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: _claimForm,
+            icon: const Icon(Icons.check_circle_outline, size: 20),
+            label: const Text('I have paid — notify the school',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ),
       const SizedBox(height: 16),
 
       // Line items

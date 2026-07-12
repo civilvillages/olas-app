@@ -13,6 +13,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _loading = true;
   String? _error;
   Map<String, dynamic> _summary = const {};
+  Map<String, dynamic>? _termSummary;
   List<dynamic> _days = const [];
   List<dynamic> _terms = const [];
   int? _termId;
@@ -30,6 +31,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       _loading = false;
       if (res.success) {
         _summary = (res.data['summary'] as Map?)?.cast<String, dynamic>() ?? {};
+        _termSummary = (res.data['term_summary'] as Map?)?.cast<String, dynamic>();
         _days = (res.data['days'] as List?) ?? const [];
         _terms = (res.data['terms'] as List?) ?? const [];
         _termId ??= (res.meta['selected_term_id'] as num?)?.toInt();
@@ -113,7 +115,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5))));
       children.add(const SizedBox(height: 8));
     }
-    if (_days.isEmpty) {
+    if (_days.isEmpty && _termSummary != null) {
+      final ts = _termSummary!;
+      children.addAll([
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Branding.primaryColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Branding.primaryColor.withOpacity(0.2)),
+          ),
+          child: Column(children: [
+            Row(children: [
+              _stat('Opened', (ts['opened'] as num?)?.toInt() ?? 0,
+                  Branding.primaryColor),
+              const SizedBox(width: 8),
+              _stat('Present', (ts['present'] as num?)?.toInt() ?? 0,
+                  Branding.successColor),
+              const SizedBox(width: 8),
+              _stat('Absent', (ts['absent'] as num?)?.toInt() ?? 0,
+                  Colors.red.shade700),
+            ]),
+            const SizedBox(height: 8),
+            Text('From your term report — the daily register was not marked this term.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
+          ]),
+        ),
+      ]);
+    } else if (_days.isEmpty) {
       children.addAll([
         const SizedBox(height: 60),
         Icon(Icons.event_available_outlined, size: 52, color: Colors.grey.shade300),

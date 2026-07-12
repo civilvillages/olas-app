@@ -111,6 +111,123 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
     );
   }
 
+  final Map<int, TextEditingController> _answerCtls = {};
+  final Set<int> _submitting = {};
+
+  Widget _submitArea(dynamic a, Map<String, dynamic>? sub) {
+    final id = (a['id'] as num).toInt();
+    final status = sub == null ? null : '${sub['status']}';
+    final allowResubmit = (a['allow_resubmit'] as bool?) ?? false;
+    final graded = status == 'graded';
+    final submitted = status == 'submitted' || status == 'returned';
+    final canWrite = !graded && (sub == null || allowResubmit);
+
+    final ctl = _answerCtls.putIfAbsent(id, () => TextEditingController());
+    final busy = _submitting.contains(id);
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (submitted)
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Branding.successColor.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            'Submitted${(sub?['is_late'] as bool? ?? false) ? ' (late)' : ''}. '
+            '${allowResubmit ? 'You can improve and resubmit below.' : ''}',
+            style: const TextStyle(fontSize: 12.5),
+          ),
+        ),
+      if (graded)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Branding.primaryColor.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text('Graded — no further changes allowed.',
+              style: const TextStyle(fontSize: 12.5)),
+        ),
+      if (canWrite) ...[
+        TextField(
+          controller: ctl,
+          maxLines: 5,
+          minLines: 3,
+          decoration: InputDecoration(
+            hintText: submitted
+                ? 'Type your improved answer…'
+                : 'Type your answer here…',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            contentPadding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Branding.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: busy ? null : () => _submit(id, ctl),
+            icon: busy
+                ? const SizedBox(width: 16, height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.send, size: 18),
+            label: Text(submitted ? 'Resubmit' : 'Submit assignment',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
+    ]);
+  }
+
+  Future<void> _submit(int id, TextEditingController ctl) async {
+    final text = ctl.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please type your answer before submitting.')));
+      return;
+    }
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Submit assignment?'),
+        content: const Text('Your answer will be sent to your teacher.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Submit')),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+
+    setState(() => _submitting.add(id));
+    final res = await widget.api
+        .post('/me/assignments/$id/submit', body: {'text_answer': text});
+    if (!mounted) return;
+    setState(() => _submitting.remove(id));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(res.success
+          ? 'Submitted! Your teacher will see it${(res.data['is_late'] as bool? ?? false) ? ' (marked late)' : ''}.'
+          : res.friendlyError),
+    ));
+    if (res.success) {
+      ctl.clear();
+      _load();
+    }
+  }
+
   Widget _errorView() => ListView(children: [
         const SizedBox(height: 110),
         Icon(Icons.wifi_off, size: 48, color: Colors.grey.shade400),
@@ -185,9 +302,8 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                       style: const TextStyle(fontSize: 13, height: 1.35)),
                 ),
               ],
-              const SizedBox(height: 8),
-              Text('Submitting from the app is coming soon — submit on the portal for now.',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5)),
+              const SizedBox(height: 10),
+              _submitArea(a, sub),
             ]),
           ),
         ],

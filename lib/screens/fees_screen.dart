@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../config/branding.dart';
 import '../core/api_client.dart';
 import 'fee_detail_screen.dart';
@@ -19,6 +20,7 @@ class _FeesScreenState extends State<FeesScreen> {
   Map<String, dynamic> _summary = const {};
   List<dynamic> _invoices = const [];
   List<dynamic> _sessions = const [];
+  Map<String, dynamic> _payInfo = const {};
   int? _sessionId;
 
   @override
@@ -54,6 +56,7 @@ class _FeesScreenState extends State<FeesScreen> {
       _summary = (res.data['summary'] as Map?)?.cast<String, dynamic>() ?? {};
       _invoices = (res.data['invoices'] as List?) ?? const [];
       _sessions = (res.data['sessions'] as List?) ?? const [];
+      _payInfo = (res.data['payment_info'] as Map?)?.cast<String, dynamic>() ?? {};
       _sessionId ??= (res.meta['selected_session_id'] as num?)?.toInt();
     });
   }
@@ -192,6 +195,50 @@ class _FeesScreenState extends State<FeesScreen> {
       ),
       const SizedBox(height: 14),
 
+      if ('${_payInfo['account_number'] ?? ''}'.isNotEmpty) ...[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Branding.primaryColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Branding.primaryColor.withOpacity(0.2)),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(Icons.account_balance, size: 18, color: Branding.primaryColor),
+              const SizedBox(width: 8),
+              const Text('How to pay',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+            ]),
+            const SizedBox(height: 8),
+            Text('Bank: ${_payInfo['bank_name'] ?? ''}',
+                style: const TextStyle(fontSize: 13.5)),
+            Text('Account name: ${_payInfo['account_name'] ?? ''}',
+                style: const TextStyle(fontSize: 13.5)),
+            Row(children: [
+              Text('Account number: ${_payInfo['account_number'] ?? ''}',
+                  style: const TextStyle(
+                      fontSize: 14.5, fontWeight: FontWeight.w800)),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(
+                      text: '${_payInfo['account_number'] ?? ''}'));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Account number copied.')));
+                },
+                child: Icon(Icons.copy, size: 16, color: Branding.primaryColor),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            Text('After paying, open the invoice below and tap "I have paid" to notify the school.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          ]),
+        ),
+        const SizedBox(height: 14),
+      ],
+
       Text('INVOICES',
           style: TextStyle(
               fontSize: 12,
@@ -222,6 +269,7 @@ class _FeesScreenState extends State<FeesScreen> {
                 builder: (_) => FeeDetailScreen(
                   api: widget.api,
                   invoiceId: (inv['id'] as num).toInt(),
+                  payInfo: _payInfo,
                 ),
               ),
             ),
