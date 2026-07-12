@@ -15,6 +15,8 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = const [];
+  List<dynamic> _sessions = const [];
+  int? _sessionId;
 
   @override
   void initState() {
@@ -24,12 +26,16 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
 
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
-    final res = await widget.api.get('/me/assignments');
+    var path = '/me/assignments';
+    if (_sessionId != null) path += '?session_id=$_sessionId';
+    final res = await widget.api.get(path);
     if (!mounted) return;
     setState(() {
       _loading = false;
       if (res.success) {
         _items = (res.data['assignments'] as List?) ?? const [];
+        _sessions = (res.data['sessions'] as List?) ?? const [];
+        _sessionId ??= (res.meta['selected_session_id'] as num?)?.toInt();
       } else {
         _error = res.friendlyError;
       }
@@ -58,6 +64,30 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Column(children: [
+      if (_sessions.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: DropdownButtonFormField<int>(
+            value: _sessionId,
+            isDense: true,
+            decoration: InputDecoration(
+              labelText: 'Session',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            items: _sessions
+                .map<DropdownMenuItem<int>>((s) => DropdownMenuItem(
+                    value: (s['id'] as num).toInt(), child: Text('${s['name']}')))
+                .toList(),
+            onChanged: (v) { setState(() => _sessionId = v); _load(); },
+          ),
+        ),
+      Expanded(child: _inner()),
+    ]);
+  }
+
+  Widget _inner() {
     return RefreshIndicator(
       onRefresh: _load,
       child: _loading

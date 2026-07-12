@@ -27,13 +27,19 @@ class _FeesScreenState extends State<FeesScreen> {
     _load();
   }
 
+  bool _all = false;
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     var path = '/me/fees';
-    if (_sessionId != null) path += '?session_id=$_sessionId';
+    if (_all) {
+      path += '?session_id=0';
+    } else if (_sessionId != null) {
+      path += '?session_id=$_sessionId';
+    }
     final res = await widget.api.get(path);
     if (!mounted) return;
     if (!res.success) {
@@ -48,6 +54,7 @@ class _FeesScreenState extends State<FeesScreen> {
       _summary = (res.data['summary'] as Map?)?.cast<String, dynamic>() ?? {};
       _invoices = (res.data['invoices'] as List?) ?? const [];
       _sessions = (res.data['sessions'] as List?) ?? const [];
+      _sessionId ??= (res.meta['selected_session_id'] as num?)?.toInt();
     });
   }
 
@@ -94,17 +101,22 @@ class _FeesScreenState extends State<FeesScreen> {
   }
 
   Widget _body() {
-    final outstanding = (_summary['total_outstanding'] as num?) ?? 0;
-    final billed = (_summary['total_billed'] as num?) ?? 0;
-    final paid = (_summary['total_paid'] as num?) ?? 0;
+    final sessOut = (_summary['session_outstanding'] as num?) ??
+        ((_summary['total_outstanding'] as num?) ?? 0);
+    final billed = (_summary['session_billed'] as num?) ??
+        ((_summary['total_billed'] as num?) ?? 0);
+    final paid = (_summary['session_paid'] as num?) ??
+        ((_summary['total_paid'] as num?) ?? 0);
+    final broughtForward = (_summary['brought_forward'] as num?) ?? 0;
+    final outstanding = (_summary['total_due'] as num?) ?? (sessOut + broughtForward);
     final settled = outstanding <= 0;
 
     return ListView(padding: const EdgeInsets.all(12), children: [
-      if (_sessions.length > 1)
+      if (_sessions.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: DropdownButtonFormField<int>(
-            value: _sessionId,
+            value: _all ? -1 : _sessionId,
             isDense: true,
             decoration: InputDecoration(
               labelText: 'Session',
@@ -115,14 +127,14 @@ class _FeesScreenState extends State<FeesScreen> {
             ),
             items: [
               const DropdownMenuItem<int>(
-                  value: null, child: Text('All sessions')),
+                  value: -1, child: Text('All sessions')),
               ..._sessions.map<DropdownMenuItem<int>>((s) => DropdownMenuItem(
                     value: (s['id'] as num).toInt(),
                     child: Text('${s['name']}'),
                   )),
             ],
             onChanged: (v) {
-              setState(() => _sessionId = v);
+              setState(() { _all = v == -1; if (v != -1) _sessionId = v; });
               _load();
             },
           ),
@@ -140,7 +152,7 @@ class _FeesScreenState extends State<FeesScreen> {
                   .withOpacity(0.25)),
         ),
         child: Column(children: [
-          Text('Outstanding balance',
+          Text('Total amount due',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
           const SizedBox(height: 4),
           Text(_naira(outstanding),
@@ -156,6 +168,26 @@ class _FeesScreenState extends State<FeesScreen> {
             const SizedBox(width: 10),
             _mini('Paid', _naira(paid)),
           ]),
+          if (broughtForward > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF4D6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(children: [
+                const Icon(Icons.history, size: 16, color: Color(0xFF8A6D00)),
+                const SizedBox(width: 8),
+                Expanded(child: Text(
+                  'Previous balance brought forward: ${_naira(broughtForward)}',
+                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF8A6D00),
+                      fontWeight: FontWeight.w600),
+                )),
+              ]),
+            ),
+          ],
         ]),
       ),
       const SizedBox(height: 14),

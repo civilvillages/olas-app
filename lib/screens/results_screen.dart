@@ -34,6 +34,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
       _loading = true;
       _error = null;
     });
+    // Anchor to the CURRENT session + term by default ("history on demand").
+    if (initial && _sessionId == null) {
+      final dash = await widget.api.get('/me/dashboard');
+      if (dash.success) {
+        final cur = (dash.data['current'] as Map?) ?? const {};
+        final sid = (cur['session_id'] as num?)?.toInt() ?? 0;
+        final tid = (cur['term_id'] as num?)?.toInt() ?? 0;
+        if (sid > 0) _sessionId = sid;
+        if (tid > 0) _termId = tid;
+      }
+    }
     var path = '/cbt/history';
     final params = <String>[];
     if (_sessionId != null) params.add('session_id=$_sessionId');
@@ -54,8 +65,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     _terms = (d['terms'] as List?) ?? const [];
     _attempts = (d['attempts'] as List?) ?? const [];
 
-    // First load with nothing selected: auto-pick the first session so the
-    // student sees something immediately (server lists sessions it knows).
+    // Fallback: nothing selected and nothing current — pick the first session.
     if (initial && _sessionId == null && _attempts.isEmpty && _sessions.isNotEmpty) {
       _sessionId = (_sessions.first['id'] as num).toInt();
       return _load();

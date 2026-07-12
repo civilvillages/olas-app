@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/branding.dart';
 import '../state/auth_state.dart';
+import 'dashboard_screen.dart';
 import 'exams_screen.dart';
 import 'results_screen.dart';
+import 'report_cards_screen.dart';
 import 'fees_screen.dart';
 import 'profile_screen.dart';
 import 'assignments_screen.dart';
 import 'announcements_screen.dart';
 import 'events_screen.dart';
 import 'resources_screen.dart';
+import 'subjects_screen.dart';
+import 'certificates_screen.dart';
+import 'attendance_screen.dart';
+import 'character_screen.dart';
 
-/// Home shell with a drawer that mirrors the portal's student sidebar:
-/// Academics (Report Card & Results, CBT / Exams, …) and School Life sections.
-/// Items not yet built in the app appear greyed with "soon".
+/// Home shell — Dashboard landing + a drawer mirroring the portal sidebar.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,21 +25,27 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-enum _Section { exams, results, fees, profile, assignments, announcements, events, resources }
-
 class _HomeScreenState extends State<HomeScreen> {
-  _Section _section = _Section.exams;
+  String _section = 'dashboard';
 
-  String get _title => switch (_section) {
-        _Section.exams => 'CBT / Exams',
-        _Section.results => 'Report Card & Results',
-        _Section.fees => 'School Fees',
-        _Section.profile => 'My Profile',
-        _Section.assignments => 'My Assignments',
-        _Section.announcements => 'Announcements',
-        _Section.events => 'Events',
-        _Section.resources => 'Learning Resources',
-      };
+  static const _titles = {
+    'dashboard': 'Dashboard',
+    'exams': 'CBT / Exams',
+    'results': 'CBT Results',
+    'reportcards': 'Report Card',
+    'fees': 'School Fees',
+    'profile': 'My Profile',
+    'assignments': 'My Assignments',
+    'announcements': 'Announcements',
+    'events': 'Events',
+    'resources': 'Learning Resources',
+    'subjects': 'My Subjects',
+    'certificates': 'My Certificates',
+    'attendance': 'Attendance',
+    'character': 'Character & Skills',
+  };
+
+  void _go(String s) => setState(() => _section = s);
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final isStudent = user?.isStudent ?? false;
 
     if (!isStudent) {
-      // Staff/other roles: welcome card until their screens are built.
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Branding.primaryColor,
@@ -56,24 +65,34 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    final body = switch (_section) {
+      'dashboard' => DashboardScreen(api: auth.api, onNavigate: _go),
+      'exams' => ExamsScreen(api: auth.api),
+      'results' => ResultsScreen(api: auth.api),
+      'reportcards' => ReportCardsScreen(api: auth.api),
+      'fees' => FeesScreen(api: auth.api),
+      'profile' => ProfileScreen(api: auth.api),
+      'assignments' => AssignmentsScreen(api: auth.api),
+      'announcements' => AnnouncementsScreen(api: auth.api),
+      'events' => EventsScreen(api: auth.api),
+      'resources' => ResourcesScreen(api: auth.api),
+      'subjects' => SubjectsScreen(api: auth.api),
+      'certificates' => CertificatesScreen(api: auth.api),
+      'attendance' => AttendanceScreen(api: auth.api),
+      'character' => CharacterScreen(api: auth.api),
+      _ => DashboardScreen(api: auth.api, onNavigate: _go),
+    };
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
         backgroundColor: Branding.primaryColor,
         foregroundColor: Colors.white,
-        title: Text(_title),
+        title: Text(_titles[_section] ?? Branding.schoolName),
         actions: [_logoutBtn(context)],
       ),
       drawer: _drawer(context, user),
-      body: switch (_section) {
-        _Section.exams => ExamsScreen(api: auth.api),
-        _Section.results => ResultsScreen(api: auth.api),
-        _Section.fees => FeesScreen(api: auth.api),
-        _Section.profile => ProfileScreen(api: auth.api),
-        _Section.assignments => AssignmentsScreen(api: auth.api),
-        _Section.announcements => AnnouncementsScreen(api: auth.api),
-        _Section.events => EventsScreen(api: auth.api),
-        _Section.resources => ResourcesScreen(api: auth.api),
-      },
+      body: body,
     );
   }
 
@@ -89,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Drawer(
       child: SafeArea(
         child: Column(children: [
-          // header — mirrors the portal's brand block
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -101,101 +119,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Text(user?.initials ?? '?',
                     style: TextStyle(
                         color: Branding.primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18)),
+                        fontWeight: FontWeight.bold, fontSize: 18)),
               ),
               const SizedBox(height: 10),
               Text(user?.fullName ?? '',
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15)),
+                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
               Text(user?.roleName ?? '',
                   style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
             ]),
           ),
           Expanded(
             child: ListView(padding: EdgeInsets.zero, children: [
-              _sectionHeader('ACADEMICS'),
-              _item(
-                icon: Icons.assignment_outlined,
-                label: 'Report Card & Results',
-                selected: _section == _Section.results,
-                onTap: () {
-                  setState(() => _section = _Section.results);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(
-                icon: Icons.edit_note,
-                label: 'CBT / Exams',
-                selected: _section == _Section.exams,
-                onTap: () {
-                  setState(() => _section = _Section.exams);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(icon: Icons.menu_book_outlined, label: 'My Subjects', soon: true),
-              _item(icon: Icons.workspace_premium_outlined, label: 'My Certificates', soon: true),
-              _item(
-                icon: Icons.assignment_ind_outlined,
-                label: 'My Assignments',
-                selected: _section == _Section.assignments,
-                onTap: () {
-                  setState(() => _section = _Section.assignments);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(icon: Icons.description_outlined, label: 'Exam Registration', soon: true),
-              _item(
-                icon: Icons.collections_bookmark_outlined,
-                label: 'Learning Resources',
-                selected: _section == _Section.resources,
-                onTap: () {
-                  setState(() => _section = _Section.resources);
-                  Navigator.pop(context);
-                },
-              ),
-              _sectionHeader('MY ACCOUNT'),
-              _item(
-                icon: Icons.payments_outlined,
-                label: 'School Fees',
-                selected: _section == _Section.fees,
-                onTap: () {
-                  setState(() => _section = _Section.fees);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(
-                icon: Icons.person_outline,
-                label: 'My Profile',
-                selected: _section == _Section.profile,
-                onTap: () {
-                  setState(() => _section = _Section.profile);
-                  Navigator.pop(context);
-                },
-              ),
-              _sectionHeader('SCHOOL LIFE'),
-              _item(icon: Icons.event_available_outlined, label: 'Attendance', soon: true),
-              _item(
-                icon: Icons.event_outlined,
-                label: 'Events',
-                selected: _section == _Section.events,
-                onTap: () {
-                  setState(() => _section = _Section.events);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(
-                icon: Icons.campaign_outlined,
-                label: 'Announcements',
-                selected: _section == _Section.announcements,
-                onTap: () {
-                  setState(() => _section = _Section.announcements);
-                  Navigator.pop(context);
-                },
-              ),
-              _item(icon: Icons.badge_outlined, label: 'Character & Skills', soon: true),
+              _item(Icons.dashboard_outlined, 'Dashboard', 'dashboard'),
+              _header('ACADEMICS'),
+              _item(Icons.assessment_outlined, 'Report Card', 'reportcards'),
+              _item(Icons.edit_note, 'CBT / Exams', 'exams'),
+              _item(Icons.fact_check_outlined, 'CBT Results', 'results'),
+              _item(Icons.menu_book_outlined, 'My Subjects', 'subjects'),
+              _item(Icons.assignment_ind_outlined, 'My Assignments', 'assignments'),
+              _item(Icons.workspace_premium_outlined, 'My Certificates', 'certificates'),
+              _item(Icons.collections_bookmark_outlined, 'Learning Resources', 'resources'),
+              _soon(Icons.description_outlined, 'Exam Registration'),
+              _header('SCHOOL LIFE'),
+              _item(Icons.event_available_outlined, 'Attendance', 'attendance'),
+              _item(Icons.event_outlined, 'Events', 'events'),
+              _item(Icons.campaign_outlined, 'Announcements', 'announcements'),
+              _item(Icons.badge_outlined, 'Character & Skills', 'character'),
+              _header('MY ACCOUNT'),
+              _item(Icons.payments_outlined, 'School Fees', 'fees'),
+              _item(Icons.person_outline, 'My Profile', 'profile'),
             ]),
           ),
           const Divider(height: 1),
@@ -212,53 +165,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _sectionHeader(String text) {
+  Widget _header(String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       child: Text(text,
-          style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: Colors.grey.shade500)),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+              letterSpacing: 0.8, color: Colors.grey.shade500)),
     );
   }
 
-  Widget _item({
-    required IconData icon,
-    required String label,
-    bool selected = false,
-    bool soon = false,
-    VoidCallback? onTap,
-  }) {
+  Widget _item(IconData icon, String label, String section) {
+    final selected = _section == section;
     return ListTile(
       dense: true,
-      enabled: !soon,
       selected: selected,
       selectedTileColor: Branding.primaryColor.withOpacity(0.08),
-      leading: Icon(icon,
-          size: 20,
-          color: soon
-              ? Colors.grey.shade400
-              : (selected ? Branding.primaryColor : Colors.grey.shade700)),
+      leading: Icon(icon, size: 20,
+          color: selected ? Branding.primaryColor : Colors.grey.shade700),
       title: Text(label,
-          style: TextStyle(
-              fontSize: 14,
-              color: soon ? Colors.grey.shade400 : null,
+          style: TextStyle(fontSize: 14,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
-      trailing: soon
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text('soon',
-                  style:
-                      TextStyle(fontSize: 10.5, color: Colors.grey.shade500)),
-            )
-          : null,
-      onTap: onTap,
+      onTap: () {
+        _go(section);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _soon(IconData icon, String label) {
+    return ListTile(
+      dense: true,
+      enabled: false,
+      leading: Icon(icon, size: 20, color: Colors.grey.shade400),
+      title: Text(label,
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text('soon',
+            style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500)),
+      ),
     );
   }
 
@@ -271,9 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             radius: 42,
             backgroundColor: Branding.primaryColor,
             child: Text(user?.initials ?? '?',
-                style: const TextStyle(
-                    fontSize: 32,
-                    color: Colors.white,
+                style: const TextStyle(fontSize: 32, color: Colors.white,
                     fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 16),
@@ -310,11 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Sign out?'),
         content: const Text('You will need to sign in again to use the app.'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
+          TextButton(onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Sign out')),
         ],
       ),
