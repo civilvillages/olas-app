@@ -6,6 +6,10 @@ import 'exams_screen.dart';
 import 'results_screen.dart';
 import 'fees_screen.dart';
 import 'profile_screen.dart';
+import 'assignments_screen.dart';
+import 'announcements_screen.dart';
+import 'events_screen.dart';
+import 'resources_screen.dart';
 
 /// Home shell with a drawer that mirrors the portal's student sidebar:
 /// Academics (Report Card & Results, CBT / Exams, …) and School Life sections.
@@ -17,7 +21,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-enum _Section { exams, results, fees, profile }
+enum _Section { exams, results, fees, profile, assignments, announcements, events, resources }
 
 class _HomeScreenState extends State<HomeScreen> {
   _Section _section = _Section.exams;
@@ -27,6 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _Section.results => 'Report Card & Results',
         _Section.fees => 'School Fees',
         _Section.profile => 'My Profile',
+        _Section.assignments => 'My Assignments',
+        _Section.announcements => 'Announcements',
+        _Section.events => 'Events',
+        _Section.resources => 'Learning Resources',
       };
 
   @override
@@ -61,6 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _Section.results => ResultsScreen(api: auth.api),
         _Section.fees => FeesScreen(api: auth.api),
         _Section.profile => ProfileScreen(api: auth.api),
+        _Section.assignments => AssignmentsScreen(api: auth.api),
+        _Section.announcements => AnnouncementsScreen(api: auth.api),
+        _Section.events => EventsScreen(api: auth.api),
+        _Section.resources => ResourcesScreen(api: auth.api),
       },
     );
   }
@@ -125,8 +137,25 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _item(icon: Icons.menu_book_outlined, label: 'My Subjects', soon: true),
               _item(icon: Icons.workspace_premium_outlined, label: 'My Certificates', soon: true),
-              _item(icon: Icons.assignment_ind_outlined, label: 'My Assignments', soon: true),
+              _item(
+                icon: Icons.assignment_ind_outlined,
+                label: 'My Assignments',
+                selected: _section == _Section.assignments,
+                onTap: () {
+                  setState(() => _section = _Section.assignments);
+                  Navigator.pop(context);
+                },
+              ),
               _item(icon: Icons.description_outlined, label: 'Exam Registration', soon: true),
+              _item(
+                icon: Icons.collections_bookmark_outlined,
+                label: 'Learning Resources',
+                selected: _section == _Section.resources,
+                onTap: () {
+                  setState(() => _section = _Section.resources);
+                  Navigator.pop(context);
+                },
+              ),
               _sectionHeader('MY ACCOUNT'),
               _item(
                 icon: Icons.payments_outlined,
@@ -148,7 +177,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _sectionHeader('SCHOOL LIFE'),
               _item(icon: Icons.event_available_outlined, label: 'Attendance', soon: true),
-              _item(icon: Icons.event_outlined, label: 'Events', soon: true),
+              _item(
+                icon: Icons.event_outlined,
+                label: 'Events',
+                selected: _section == _Section.events,
+                onTap: () {
+                  setState(() => _section = _Section.events);
+                  Navigator.pop(context);
+                },
+              ),
+              _item(
+                icon: Icons.campaign_outlined,
+                label: 'Announcements',
+                selected: _section == _Section.announcements,
+                onTap: () {
+                  setState(() => _section = _Section.announcements);
+                  Navigator.pop(context);
+                },
+              ),
               _item(icon: Icons.badge_outlined, label: 'Character & Skills', soon: true),
             ]),
           ),
