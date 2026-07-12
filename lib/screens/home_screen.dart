@@ -4,6 +4,8 @@ import '../config/branding.dart';
 import '../state/auth_state.dart';
 import 'exams_screen.dart';
 import 'results_screen.dart';
+import 'fees_screen.dart';
+import 'profile_screen.dart';
 
 /// Home shell with a drawer that mirrors the portal's student sidebar:
 /// Academics (Report Card & Results, CBT / Exams, …) and School Life sections.
@@ -15,7 +17,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-enum _Section { exams, results }
+enum _Section { exams, results, fees, profile }
 
 class _HomeScreenState extends State<HomeScreen> {
   _Section _section = _Section.exams;
@@ -23,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String get _title => switch (_section) {
         _Section.exams => 'CBT / Exams',
         _Section.results => 'Report Card & Results',
+        _Section.fees => 'School Fees',
+        _Section.profile => 'My Profile',
       };
 
   @override
@@ -55,6 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
       body: switch (_section) {
         _Section.exams => ExamsScreen(api: auth.api),
         _Section.results => ResultsScreen(api: auth.api),
+        _Section.fees => FeesScreen(api: auth.api),
+        _Section.profile => ProfileScreen(api: auth.api),
       },
     );
   }
@@ -121,6 +127,25 @@ class _HomeScreenState extends State<HomeScreen> {
               _item(icon: Icons.workspace_premium_outlined, label: 'My Certificates', soon: true),
               _item(icon: Icons.assignment_ind_outlined, label: 'My Assignments', soon: true),
               _item(icon: Icons.description_outlined, label: 'Exam Registration', soon: true),
+              _sectionHeader('MY ACCOUNT'),
+              _item(
+                icon: Icons.payments_outlined,
+                label: 'School Fees',
+                selected: _section == _Section.fees,
+                onTap: () {
+                  setState(() => _section = _Section.fees);
+                  Navigator.pop(context);
+                },
+              ),
+              _item(
+                icon: Icons.person_outline,
+                label: 'My Profile',
+                selected: _section == _Section.profile,
+                onTap: () {
+                  setState(() => _section = _Section.profile);
+                  Navigator.pop(context);
+                },
+              ),
               _sectionHeader('SCHOOL LIFE'),
               _item(icon: Icons.event_available_outlined, label: 'Attendance', soon: true),
               _item(icon: Icons.event_outlined, label: 'Events', soon: true),
