@@ -16,6 +16,7 @@ import 'subjects_screen.dart';
 import 'certificates_screen.dart';
 import 'attendance_screen.dart';
 import 'character_screen.dart';
+import 'staff/staff_home_screen.dart';
 
 /// Home shell — Dashboard landing + a drawer mirroring the portal sidebar.
 class HomeScreen extends StatefulWidget {
@@ -54,15 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isStudent = user?.isStudent ?? false;
 
     if (!isStudent) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Branding.primaryColor,
-          foregroundColor: Colors.white,
-          title: Text(Branding.schoolName),
-          actions: [_logoutBtn(context)],
-        ),
-        body: _welcome(context, user),
-      );
+      return const StaffHomeScreen();
     }
 
     final body = switch (_section) {
