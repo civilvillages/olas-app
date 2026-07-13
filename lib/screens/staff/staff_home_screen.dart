@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/branding.dart';
 import '../../state/auth_state.dart';
@@ -14,6 +15,91 @@ class StaffHomeScreen extends StatefulWidget {
 
 class _StaffHomeScreenState extends State<StaffHomeScreen> {
   String _section = 'dashboard';
+  final List<String> _back = [];
+  final List<String> _fwd = [];
+
+  void _go(String s) {
+    if (s == _section) return;
+    setState(() {
+      _back.add(_section);
+      _fwd.clear();
+      _section = s;
+    });
+  }
+
+  void _goBack() {
+    setState(() {
+      if (_back.isNotEmpty) {
+        _fwd.add(_section);
+        _section = _back.removeLast();
+      } else if (_section != 'dashboard') {
+        _fwd.add(_section);
+        _section = 'dashboard';
+      }
+    });
+  }
+
+  void _goForward() {
+    if (_fwd.isEmpty) return;
+    setState(() {
+      _back.add(_section);
+      _section = _fwd.removeLast();
+    });
+  }
+
+  void _goHome() {
+    if (_section == 'dashboard') return;
+    setState(() {
+      _back.add(_section);
+      _fwd.clear();
+      _section = 'dashboard';
+    });
+  }
+
+  void _onPop(bool didPop, Object? result) {
+    if (didPop) return;
+    if (_section != 'dashboard' || _back.isNotEmpty) {
+      _goBack();
+    } else {
+      SystemNavigator.pop();
+    }
+  }
+
+  Widget _bottomNav() {
+    final canBack = _back.isNotEmpty || _section != 'dashboard';
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          IconButton(
+            tooltip: 'Back',
+            onPressed: canBack ? _goBack : null,
+            icon: Icon(Icons.arrow_back_ios_new, size: 20,
+                color: canBack ? Colors.grey.shade800 : Colors.grey.shade300),
+          ),
+          IconButton(
+            tooltip: 'Home',
+            onPressed: _section == 'dashboard' ? null : _goHome,
+            icon: Icon(Icons.home_outlined, size: 24,
+                color: _section == 'dashboard'
+                    ? Branding.primaryColor
+                    : Colors.grey.shade800),
+          ),
+          IconButton(
+            tooltip: 'Forward',
+            onPressed: _fwd.isEmpty ? null : _goForward,
+            icon: Icon(Icons.arrow_forward_ios, size: 20,
+                color: _fwd.isEmpty ? Colors.grey.shade300 : Colors.grey.shade800),
+          ),
+        ]),
+      ),
+    );
+  }
 
   static const _titles = {
     'dashboard': 'Staff Dashboard',
@@ -30,22 +116,27 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       _ => _dashboard(user),
     };
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
-      appBar: AppBar(
-        backgroundColor: Branding.primaryColor,
-        foregroundColor: Colors.white,
-        title: Text(_titles[_section] ?? Branding.schoolName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () => _confirmLogout(context),
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F6F9),
+        appBar: AppBar(
+          backgroundColor: Branding.primaryColor,
+          foregroundColor: Colors.white,
+          title: Text(_titles[_section] ?? Branding.schoolName),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Sign out',
+              onPressed: () => _confirmLogout(context),
+            ),
+          ],
+        ),
+        drawer: _drawer(user),
+        body: body,
+        bottomNavigationBar: _bottomNav(),
       ),
-      drawer: _drawer(user),
-      body: body,
     );
   }
 
@@ -128,7 +219,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
           style: TextStyle(fontSize: 14,
               fontWeight: sel ? FontWeight.w700 : FontWeight.w500)),
       onTap: () {
-        setState(() => _section = section);
+        _go(section);
         Navigator.pop(context);
       },
     );
@@ -154,44 +245,77 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
   Widget _dashboard(user) {
     return ListView(padding: const EdgeInsets.all(16), children: [
       Text('Welcome, ${user?.fullName ?? ''}!',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-      Text('Staff portal', style: TextStyle(color: Colors.grey.shade600)),
-      const SizedBox(height: 18),
-      Material(
-        color: Colors.white,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+      Text('Staff portal', style: TextStyle(color: Colors.grey.shade600, fontSize: 15)),
+      const SizedBox(height: 16),
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.35,
+        children: [
+          _tile('Score Entry', Icons.edit_note, const Color(0xFF198754),
+              live: true, section: 'scores'),
+          _tile('Results', Icons.assessment_outlined, const Color(0xFF0D6EFD)),
+          _tile('Result Release', Icons.lock_open_outlined, const Color(0xFF6F42C1)),
+          _tile('Reports & Analytics', Icons.analytics_outlined, const Color(0xFF0DCAF0)),
+          _tile('Trait Ratings', Icons.badge_outlined, const Color(0xFF6C757D)),
+          _tile('Question Bank', Icons.quiz_outlined, const Color(0xFFD63384)),
+          _tile('CBT Exams', Icons.edit_document, const Color(0xFFFD7E14)),
+          _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997)),
+          _tile('Theory Marking', Icons.rate_review_outlined, const Color(0xFFB8860B)),
+          _tile('Communication', Icons.campaign_outlined, const Color(0xFFDC3545)),
+          _tile('Students', Icons.groups_outlined, const Color(0xFF6610F2)),
+          _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107)),
+          _tile('Finance', Icons.payments_outlined, const Color(0xFF198754)),
+        ],
+      ),
+    ]);
+  }
+
+  Widget _tile(String label, IconData icon, Color color,
+      {bool live = false, String? section}) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => setState(() => _section = 'scores'),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Branding.primaryColor.withOpacity(0.3)),
-            ),
-            child: Row(children: [
-              Icon(Icons.edit_note, size: 40, color: Branding.primaryColor),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Score Entry',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 17)),
-                      Text('Enter CA and exam scores for your classes — works offline.',
-                          style: TextStyle(
-                              fontSize: 12.5, color: Colors.grey.shade600)),
-                    ]),
-              ),
-              const Icon(Icons.chevron_right),
-            ]),
+        onTap: live && section != null
+            ? () => _go(section)
+            : () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$label is coming in an upcoming build.'))),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
           ),
+          padding: const EdgeInsets.all(12),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: 32, color: live ? color : color.withOpacity(0.45)),
+            const SizedBox(height: 8),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: live ? null : Colors.grey.shade500)),
+            if (!live)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('soon',
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+              ),
+          ]),
         ),
       ),
-      const SizedBox(height: 14),
-      Text('More staff features are coming in upcoming builds: results, result release, CBT management, communication, students, attendance and finance.',
-          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500)),
-    ]);
+    );
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
