@@ -7,6 +7,7 @@ import 'score_picker_screen.dart';
 import 'results_screen.dart';
 import 'release_screen.dart';
 import 'reports_screen.dart';
+import 'traits_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -110,6 +111,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'results': 'Results',
     'release': 'Result Release',
     'reports': 'Reports & Analytics',
+    'traits': 'Trait Ratings',
   };
 
   @override
@@ -122,6 +124,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'results' => StaffResultsScreen(api: auth.api),
       'release' => ReleaseScreen(api: auth.api),
       'reports' => ReportsScreen(api: auth.api),
+      'traits' => TraitsScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -182,7 +185,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.assessment_outlined, 'Results', 'results'),
               _item(Icons.lock_open_outlined, 'Result Release', 'release'),
               _item(Icons.analytics_outlined, 'Reports & Analytics', 'reports'),
-              _soon(Icons.badge_outlined, 'Trait Ratings'),
+              _item(Icons.badge_outlined, 'Trait Ratings', 'traits'),
               _header('CBT'),
               _soon(Icons.quiz_outlined, 'Question Bank'),
               _soon(Icons.edit_document, 'Exams'),
@@ -273,7 +276,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               live: true, section: 'release'),
           _tile('Reports & Analytics', Icons.analytics_outlined, const Color(0xFF0DCAF0),
               live: true, section: 'reports'),
-          _tile('Trait Ratings', Icons.badge_outlined, const Color(0xFF6C757D)),
+          _tile('Trait Ratings', Icons.badge_outlined, const Color(0xFF6C757D),
+              live: true, section: 'traits'),
           _tile('Question Bank', Icons.quiz_outlined, const Color(0xFFD63384)),
           _tile('CBT Exams', Icons.edit_document, const Color(0xFFFD7E14)),
           _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997)),
