@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/branding.dart';
 import '../state/auth_state.dart';
@@ -28,6 +29,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _section = 'dashboard';
+  final List<String> _back = [];
+  final List<String> _fwd = [];
 
   static const _titles = {
     'dashboard': 'Dashboard',
@@ -46,7 +49,88 @@ class _HomeScreenState extends State<HomeScreen> {
     'character': 'Character & Skills',
   };
 
-  void _go(String s) => setState(() => _section = s);
+  void _go(String s) {
+    if (s == _section) return;
+    setState(() {
+      _back.add(_section);
+      _fwd.clear();
+      _section = s;
+    });
+  }
+
+  void _goBack() {
+    setState(() {
+      if (_back.isNotEmpty) {
+        _fwd.add(_section);
+        _section = _back.removeLast();
+      } else if (_section != 'dashboard') {
+        _fwd.add(_section);
+        _section = 'dashboard';
+      }
+    });
+  }
+
+  void _goForward() {
+    if (_fwd.isEmpty) return;
+    setState(() {
+      _back.add(_section);
+      _section = _fwd.removeLast();
+    });
+  }
+
+  void _goHome() {
+    if (_section == 'dashboard') return;
+    setState(() {
+      _back.add(_section);
+      _fwd.clear();
+      _section = 'dashboard';
+    });
+  }
+
+  void _onPop(bool didPop, Object? result) {
+    if (didPop) return;
+    if (_section != 'dashboard' || _back.isNotEmpty) {
+      _goBack();
+    } else {
+      SystemNavigator.pop(); // truly exit only from the dashboard
+    }
+  }
+
+  Widget _bottomNav() {
+    final canBack = _back.isNotEmpty || _section != 'dashboard';
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          IconButton(
+            tooltip: 'Back',
+            onPressed: canBack ? _goBack : null,
+            icon: Icon(Icons.arrow_back_ios_new, size: 20,
+                color: canBack ? Colors.grey.shade800 : Colors.grey.shade300),
+          ),
+          IconButton(
+            tooltip: 'Home',
+            onPressed: _section == 'dashboard' ? null : _goHome,
+            icon: Icon(Icons.home_outlined, size: 24,
+                color: _section == 'dashboard'
+                    ? Branding.primaryColor
+                    : Colors.grey.shade800),
+          ),
+          IconButton(
+            tooltip: 'Forward',
+            onPressed: _fwd.isEmpty ? null : _goForward,
+            icon: Icon(Icons.arrow_forward_ios, size: 20,
+                color: _fwd.isEmpty ? Colors.grey.shade300 : Colors.grey.shade800),
+          ),
+        ]),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,16 +160,21 @@ class _HomeScreenState extends State<HomeScreen> {
       _ => DashboardScreen(api: auth.api, onNavigate: _go),
     };
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
-      appBar: AppBar(
-        backgroundColor: Branding.primaryColor,
-        foregroundColor: Colors.white,
-        title: Text(_titles[_section] ?? Branding.schoolName),
-        actions: [_logoutBtn(context)],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F6F9),
+        appBar: AppBar(
+          backgroundColor: Branding.primaryColor,
+          foregroundColor: Colors.white,
+          title: Text(_titles[_section] ?? Branding.schoolName),
+          actions: [_logoutBtn(context)],
+        ),
+        drawer: _drawer(context, user),
+        body: body,
+        bottomNavigationBar: _bottomNav(),
       ),
-      drawer: _drawer(context, user),
-      body: body,
     );
   }
 
