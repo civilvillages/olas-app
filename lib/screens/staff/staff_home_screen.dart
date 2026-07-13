@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../config/branding.dart';
 import '../../state/auth_state.dart';
 import 'score_picker_screen.dart';
+import 'results_screen.dart';
+import 'release_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -104,6 +106,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
   static const _titles = {
     'dashboard': 'Staff Dashboard',
     'scores': 'Score Entry',
+    'results': 'Results',
+    'release': 'Result Release',
   };
 
   @override
@@ -113,6 +117,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
 
     final body = switch (_section) {
       'scores' => ScorePickerScreen(api: auth.api),
+      'results' => StaffResultsScreen(api: auth.api),
+      'release' => ReleaseScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -170,8 +176,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.dashboard_outlined, 'Dashboard', 'dashboard'),
               _header('ASSESSMENT & EXAMINATIONS'),
               _item(Icons.edit_note, 'Score Entry', 'scores'),
-              _soon(Icons.assessment_outlined, 'Results'),
-              _soon(Icons.lock_open_outlined, 'Result Release'),
+              _item(Icons.assessment_outlined, 'Results', 'results'),
+              _item(Icons.lock_open_outlined, 'Result Release', 'release'),
               _soon(Icons.analytics_outlined, 'Reports & Analytics'),
               _soon(Icons.badge_outlined, 'Trait Ratings'),
               _header('CBT'),
@@ -258,8 +264,10 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
         children: [
           _tile('Score Entry', Icons.edit_note, const Color(0xFF198754),
               live: true, section: 'scores'),
-          _tile('Results', Icons.assessment_outlined, const Color(0xFF0D6EFD)),
-          _tile('Result Release', Icons.lock_open_outlined, const Color(0xFF6F42C1)),
+          _tile('Results', Icons.assessment_outlined, const Color(0xFF0D6EFD),
+              live: true, section: 'results'),
+          _tile('Result Release', Icons.lock_open_outlined, const Color(0xFF6F42C1),
+              live: true, section: 'release'),
           _tile('Reports & Analytics', Icons.analytics_outlined, const Color(0xFF0DCAF0)),
           _tile('Trait Ratings', Icons.badge_outlined, const Color(0xFF6C757D)),
           _tile('Question Bank', Icons.quiz_outlined, const Color(0xFFD63384)),
