@@ -9,7 +9,9 @@ import 'release_screen.dart';
 import 'reports_screen.dart';
 import 'traits_screen.dart';
 import 'cbt_exams_screen.dart';
+import 'cbt_bank_screen.dart';
 import 'cbt_exams_screen.dart';
+import 'cbt_bank_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -115,6 +117,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'reports': 'Reports & Analytics',
     'traits': 'Trait Ratings',
     'cbt_exams': 'CBT Exams',
+    'cbt_bank': 'Question Bank',
   };
 
   @override
@@ -129,6 +132,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'reports' => ReportsScreen(api: auth.api),
       'traits' => TraitsScreen(api: auth.api),
       'cbt_exams' => CbtExamsScreen(api: auth.api),
+      'cbt_bank' => CbtBankScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -191,7 +195,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.analytics_outlined, 'Reports & Analytics', 'reports'),
               _item(Icons.badge_outlined, 'Trait Ratings', 'traits'),
               _header('CBT'),
-              _soon(Icons.quiz_outlined, 'Question Bank'),
+              _item(Icons.quiz_outlined, 'Question Bank', 'cbt_bank'),
               _item(Icons.edit_document, 'Exams', 'cbt_exams'),
               _soon(Icons.publish_outlined, 'Publish Results'),
               _soon(Icons.rate_review_outlined, 'Theory Marking'),
@@ -282,7 +286,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               live: true, section: 'reports'),
           _tile('Trait Ratings', Icons.badge_outlined, const Color(0xFF6C757D),
               live: true, section: 'traits'),
-          _tile('Question Bank', Icons.quiz_outlined, const Color(0xFFD63384)),
+          _tile('Question Bank', Icons.quiz_outlined, const Color(0xFFD63384),
+              live: true, section: 'cbt_bank'),
           _tile('CBT Exams', Icons.edit_document, const Color(0xFFFD7E14),
               live: true, section: 'cbt_exams'),
           _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997)),

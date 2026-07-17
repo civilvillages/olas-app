@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/branding.dart';
 import '../../core/api_client.dart';
+import 'cbt_exam_questions_screen.dart';
 
 /// CBT Exams management — list (status-grouped), create/edit, publish/close/archive.
 /// Endpoints: /cbt/manage/meta, /cbt/manage/exams (+/{id}, publish, close, archive).
@@ -229,6 +230,20 @@ class _CbtExamsScreenState extends State<CbtExamsScreen> {
                 style: const TextStyle(fontSize: 13)),
             const SizedBox(height: 14),
             Wrap(spacing: 8, runSpacing: 8, children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Branding.primaryColor,
+                    foregroundColor: Colors.white),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => CbtExamQuestionsScreen(
+                          api: widget.api, exam: e)));
+                  _loadExams();
+                },
+                icon: const Icon(Icons.help_outline, size: 17),
+                label: const Text('Questions'),
+              ),
               OutlinedButton.icon(
                 onPressed: () { Navigator.pop(ctx); _openForm(e); },
                 icon: const Icon(Icons.edit_outlined, size: 17),
@@ -257,9 +272,6 @@ class _CbtExamsScreenState extends State<CbtExamsScreen> {
                   label: const Text('Archive'),
                 ),
             ]),
-            const SizedBox(height: 6),
-            Text('Question management (add from the bank, edit, remove) is coming in the next build.',
-                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
           ]),
         ),
       ),
