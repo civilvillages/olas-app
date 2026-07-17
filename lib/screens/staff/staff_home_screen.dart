@@ -10,8 +10,10 @@ import 'reports_screen.dart';
 import 'traits_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
+import 'cbt_theory_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
+import 'cbt_theory_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -118,6 +120,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'traits': 'Trait Ratings',
     'cbt_exams': 'CBT Exams',
     'cbt_bank': 'Question Bank',
+    'cbt_theory': 'Theory Marking',
   };
 
   @override
@@ -133,6 +136,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'traits' => TraitsScreen(api: auth.api),
       'cbt_exams' => CbtExamsScreen(api: auth.api),
       'cbt_bank' => CbtBankScreen(api: auth.api),
+      'cbt_theory' => CbtTheoryScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -198,7 +202,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.quiz_outlined, 'Question Bank', 'cbt_bank'),
               _item(Icons.edit_document, 'Exams', 'cbt_exams'),
               _soon(Icons.publish_outlined, 'Publish Results'),
-              _soon(Icons.rate_review_outlined, 'Theory Marking'),
+              _item(Icons.rate_review_outlined, 'Theory Marking', 'cbt_theory'),
               _header('MORE'),
               _soon(Icons.campaign_outlined, 'Communication Center'),
               _soon(Icons.groups_outlined, 'Student Management'),
@@ -291,7 +295,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
           _tile('CBT Exams', Icons.edit_document, const Color(0xFFFD7E14),
               live: true, section: 'cbt_exams'),
           _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997)),
-          _tile('Theory Marking', Icons.rate_review_outlined, const Color(0xFFB8860B)),
+          _tile('Theory Marking', Icons.rate_review_outlined, const Color(0xFFB8860B),
+              live: true, section: 'cbt_theory'),
           _tile('Communication', Icons.campaign_outlined, const Color(0xFFDC3545)),
           _tile('Students', Icons.groups_outlined, const Color(0xFF6610F2)),
           _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107)),
