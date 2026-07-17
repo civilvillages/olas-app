@@ -11,9 +11,13 @@ import 'traits_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
 import 'cbt_theory_screen.dart';
+import 'cbt_publish_screen.dart';
+import 'cbt_reports_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
 import 'cbt_theory_screen.dart';
+import 'cbt_publish_screen.dart';
+import 'cbt_reports_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -121,6 +125,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'cbt_exams': 'CBT Exams',
     'cbt_bank': 'Question Bank',
     'cbt_theory': 'Theory Marking',
+    'cbt_publish': 'Publish Results',
+    'cbt_reports': 'CBT Reports',
   };
 
   @override
@@ -137,6 +143,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'cbt_exams' => CbtExamsScreen(api: auth.api),
       'cbt_bank' => CbtBankScreen(api: auth.api),
       'cbt_theory' => CbtTheoryScreen(api: auth.api),
+      'cbt_publish' => CbtPublishScreen(api: auth.api),
+      'cbt_reports' => CbtReportsScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -201,8 +209,9 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _header('CBT'),
               _item(Icons.quiz_outlined, 'Question Bank', 'cbt_bank'),
               _item(Icons.edit_document, 'Exams', 'cbt_exams'),
-              _soon(Icons.publish_outlined, 'Publish Results'),
+              _item(Icons.publish_outlined, 'Publish Results', 'cbt_publish'),
               _item(Icons.rate_review_outlined, 'Theory Marking', 'cbt_theory'),
+              _item(Icons.bar_chart_outlined, 'CBT Reports', 'cbt_reports'),
               _header('MORE'),
               _soon(Icons.campaign_outlined, 'Communication Center'),
               _soon(Icons.groups_outlined, 'Student Management'),
@@ -294,9 +303,12 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               live: true, section: 'cbt_bank'),
           _tile('CBT Exams', Icons.edit_document, const Color(0xFFFD7E14),
               live: true, section: 'cbt_exams'),
-          _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997)),
+          _tile('Publish Results', Icons.publish_outlined, const Color(0xFF20C997),
+              live: true, section: 'cbt_publish'),
           _tile('Theory Marking', Icons.rate_review_outlined, const Color(0xFFB8860B),
               live: true, section: 'cbt_theory'),
+          _tile('CBT Reports', Icons.bar_chart_outlined, const Color(0xFF17A2B8),
+              live: true, section: 'cbt_reports'),
           _tile('Communication', Icons.campaign_outlined, const Color(0xFFDC3545)),
           _tile('Students', Icons.groups_outlined, const Color(0xFF6610F2)),
           _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107)),
