@@ -13,11 +13,13 @@ import 'cbt_bank_screen.dart';
 import 'cbt_theory_screen.dart';
 import 'cbt_publish_screen.dart';
 import 'cbt_reports_screen.dart';
+import 'comm_announcements_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
 import 'cbt_theory_screen.dart';
 import 'cbt_publish_screen.dart';
 import 'cbt_reports_screen.dart';
+import 'comm_announcements_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -127,6 +129,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'cbt_theory': 'Theory Marking',
     'cbt_publish': 'Publish Results',
     'cbt_reports': 'CBT Reports',
+    'comm': 'Communication',
   };
 
   @override
@@ -145,6 +148,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'cbt_theory' => CbtTheoryScreen(api: auth.api),
       'cbt_publish' => CbtPublishScreen(api: auth.api),
       'cbt_reports' => CbtReportsScreen(api: auth.api),
+      'comm' => CommAnnouncementsScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -213,7 +217,7 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.rate_review_outlined, 'Theory Marking', 'cbt_theory'),
               _item(Icons.bar_chart_outlined, 'CBT Reports', 'cbt_reports'),
               _header('MORE'),
-              _soon(Icons.campaign_outlined, 'Communication Center'),
+              _item(Icons.campaign_outlined, 'Communication Center', 'comm'),
               _soon(Icons.groups_outlined, 'Student Management'),
               _soon(Icons.event_available_outlined, 'Attendance'),
               _soon(Icons.payments_outlined, 'Finance'),
@@ -309,7 +313,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               live: true, section: 'cbt_theory'),
           _tile('CBT Reports', Icons.bar_chart_outlined, const Color(0xFF17A2B8),
               live: true, section: 'cbt_reports'),
-          _tile('Communication', Icons.campaign_outlined, const Color(0xFFDC3545)),
+          _tile('Communication', Icons.campaign_outlined, const Color(0xFFDC3545),
+              live: true, section: 'comm'),
           _tile('Students', Icons.groups_outlined, const Color(0xFF6610F2)),
           _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107)),
           _tile('Finance', Icons.payments_outlined, const Color(0xFF198754)),
