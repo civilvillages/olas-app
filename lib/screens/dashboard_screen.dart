@@ -118,6 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 sub: feesOut > 0 ? '${_naira(feesOut)} due' : null),
             _tile('Announcements', Icons.campaign_outlined, const Color(0xFFFD7E14), 'announcements',
                 sub: unread > 0 ? '$unread new' : null),
+            _tile('Messages', Icons.forum_outlined, const Color(0xFF0D6EFD), 'messages'),
             _tile('Events', Icons.event_outlined, const Color(0xFF20C997), 'events'),
             _tile('Resources', Icons.collections_bookmark_outlined, const Color(0xFF6610F2), 'resources'),
             _tile('Certificates', Icons.workspace_premium_outlined, const Color(0xFFB8860B), 'certificates'),

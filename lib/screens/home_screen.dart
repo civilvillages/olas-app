@@ -17,6 +17,7 @@ import 'subjects_screen.dart';
 import 'certificates_screen.dart';
 import 'attendance_screen.dart';
 import 'character_screen.dart';
+import 'messages_screen.dart';
 import 'staff/staff_home_screen.dart';
 
 /// Home shell — Dashboard landing + a drawer mirroring the portal sidebar.
@@ -46,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'subjects': 'My Subjects',
     'certificates': 'My Certificates',
     'attendance': 'Attendance',
+    'messages': 'Messages',
     'character': 'Character & Skills',
   };
 
@@ -157,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'certificates' => CertificatesScreen(api: auth.api),
       'attendance' => AttendanceScreen(api: auth.api),
       'character' => CharacterScreen(api: auth.api),
+      'messages' => MessagesScreen(api: auth.api),
       _ => DashboardScreen(api: auth.api, onNavigate: _go),
     };
 
@@ -227,6 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _item(Icons.event_available_outlined, 'Attendance', 'attendance'),
               _item(Icons.event_outlined, 'Events', 'events'),
               _item(Icons.campaign_outlined, 'Announcements', 'announcements'),
+              _item(Icons.forum_outlined, 'Messages', 'messages'),
               _item(Icons.badge_outlined, 'Character & Skills', 'character'),
               _header('MY ACCOUNT'),
               _item(Icons.payments_outlined, 'School Fees', 'fees'),
