@@ -87,13 +87,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ]),
       ));
     }
-    final enr = (_d['enrolment'] as Map?) ?? const {};
-    final perf = (_d['performance'] as Map?) ?? const {};
-    final totals = (enr['totals'] as Map?) ?? const {};
-    final gender = (enr['by_gender'] as Map?) ?? const {};
-    final summary = (perf['summary'] as Map?) ?? const {};
-    final grades = (perf['grades'] as Map?) ?? const {};
-    final byClass = (perf['by_class'] as List?) ?? const [];
+    final enr = asMap(_d['enrolment']);
+    final perf = asMap(_d['performance']);
+    final totals = asMap(enr['totals']);
+    final gender = asMap(enr['by_gender']);
+    final summary = asMap(perf['summary']);
+    final grades = asEntries(perf['grades']); // Map or List — both safe
+    final byClass = asList(perf['by_class']);
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -206,7 +206,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         if (grades.isNotEmpty) ...[
           Text('GRADE DISTRIBUTION', style: _h()),
           const SizedBox(height: 6),
-          Wrap(spacing: 8, runSpacing: 8, children: grades.entries.map((e) =>
+         Wrap(spacing: 8, runSpacing: 8, children: grades.map((e) =>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
