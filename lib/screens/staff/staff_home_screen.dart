@@ -18,16 +18,6 @@ import '../messages_screen.dart';
 import 'students_screen.dart';
 import 'attendance_entry_screen.dart';
 import 'finance_screen.dart';
-import 'cbt_exams_screen.dart';
-import 'cbt_bank_screen.dart';
-import 'cbt_theory_screen.dart';
-import 'cbt_publish_screen.dart';
-import 'cbt_reports_screen.dart';
-import 'comm_announcements_screen.dart';
-import '../messages_screen.dart';
-import 'students_screen.dart';
-import 'attendance_entry_screen.dart';
-import 'finance_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -279,23 +269,6 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     );
   }
 
-  Widget _soon(IconData icon, String label) => ListTile(
-        dense: true,
-        enabled: false,
-        leading: Icon(icon, size: 20, color: Colors.grey.shade400),
-        title: Text(label,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text('soon',
-              style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500)),
-        ),
-      );
-
   Widget _dashboard(user) {
     return ListView(padding: const EdgeInsets.all(16), children: [
       Text('Welcome, ${user?.fullName ?? ''}!',
@@ -336,8 +309,10 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               live: true, section: 'messages'),
           _tile('Students', Icons.groups_outlined, const Color(0xFF6610F2),
               live: true, section: 'students'),
-          _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107)),
-          _tile('Finance', Icons.payments_outlined, const Color(0xFF198754)),
+          _tile('Attendance', Icons.event_available_outlined, const Color(0xFFFFC107),
+              live: true, section: 'attendance'),
+          _tile('Finance', Icons.payments_outlined, const Color(0xFF198754),
+              live: true, section: 'finance'),
         ],
       ),
     ]);

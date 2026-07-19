@@ -3,6 +3,7 @@ import '../../config/branding.dart';
 import '../../core/api_client.dart';
 
 /// Finance — invoice overview by class/term, invoice detail, record payment.
+/// Plus: set the school bank account that parents see and pay into.
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key, required this.api});
   final ApiClient api;
@@ -51,6 +52,116 @@ class _FinanceScreenState extends State<FinanceScreen> {
     });
   }
 
+  Future<void> _bankSheet() async {
+    final res = await widget.api.get('/staff/settings/bank');
+    if (!mounted) return;
+    if (!res.success) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(res.friendlyError)));
+      return;
+    }
+    final bank = (res.data['bank'] as Map?)?.cast<String, dynamic>() ?? {};
+    final nameCtl = TextEditingController(text: '${bank['bank_name'] ?? ''}');
+    final acctNameCtl =
+        TextEditingController(text: '${bank['account_name'] ?? ''}');
+    final acctNumCtl =
+        TextEditingController(text: '${bank['account_number'] ?? ''}');
+    var saving = false;
+
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => Padding(
+          padding: EdgeInsets.only(
+              left: 16, right: 16, top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(Icons.account_balance, color: Branding.primaryColor),
+              const SizedBox(width: 8),
+              const Text('School bank account',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            ]),
+            const SizedBox(height: 4),
+            Text('Parents see these details on their fees page and pay into this account.',
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: nameCtl,
+              decoration: _bankDec('Bank name'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: acctNameCtl,
+              decoration: _bankDec('Account name'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: acctNumCtl,
+              keyboardType: TextInputType.number,
+              decoration: _bankDec('Account number'),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Branding.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setSt(() => saving = true);
+                        final r = await widget.api
+                            .post('/staff/settings/bank', body: {
+                          'bank_name': nameCtl.text.trim(),
+                          'account_name': acctNameCtl.text.trim(),
+                          'account_number': acctNumCtl.text.trim(),
+                        });
+                        setSt(() => saving = false);
+                        if (!ctx.mounted) return;
+                        if (r.success) {
+                          Navigator.pop(ctx);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Bank details saved — parents can now see them.')));
+                          }
+                        } else {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(content: Text(r.friendlyError)));
+                        }
+                      },
+                child: Text(saving ? 'Saving…' : 'Save bank details',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+    nameCtl.dispose();
+    acctNameCtl.dispose();
+    acctNumCtl.dispose();
+  }
+
+  InputDecoration _bankDec(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF8F9FB),
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      );
+
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
@@ -74,6 +185,26 @@ class _FinanceScreenState extends State<FinanceScreen> {
     }
 
     return ListView(padding: const EdgeInsets.all(14), children: [
+      // Bank-details setup card — the missing admin-side piece of #9.
+      Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Branding.primaryColor.withOpacity(0.25)),
+        ),
+        color: Branding.primaryColor.withOpacity(0.04),
+        child: ListTile(
+          leading: Icon(Icons.account_balance, color: Branding.primaryColor),
+          title: const Text('School bank account',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+          subtitle: const Text('Set the account parents pay into',
+              style: TextStyle(fontSize: 12)),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _bankSheet,
+        ),
+      ),
+      const SizedBox(height: 10),
       Row(children: [
         Expanded(child: DropdownButtonFormField<int>(
           value: _classId,
