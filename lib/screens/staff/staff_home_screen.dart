@@ -16,6 +16,8 @@ import 'cbt_reports_screen.dart';
 import 'comm_announcements_screen.dart';
 import '../messages_screen.dart';
 import 'students_screen.dart';
+import 'attendance_entry_screen.dart';
+import 'finance_screen.dart';
 import 'cbt_exams_screen.dart';
 import 'cbt_bank_screen.dart';
 import 'cbt_theory_screen.dart';
@@ -24,6 +26,8 @@ import 'cbt_reports_screen.dart';
 import 'comm_announcements_screen.dart';
 import '../messages_screen.dart';
 import 'students_screen.dart';
+import 'attendance_entry_screen.dart';
+import 'finance_screen.dart';
 
 /// Staff shell — Phase A: Dashboard welcome + Score Entry live.
 class StaffHomeScreen extends StatefulWidget {
@@ -136,6 +140,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     'comm': 'Communication',
     'messages': 'Messages',
     'students': 'Student Management',
+    'attendance': 'Attendance',
+    'finance': 'Finance',
   };
 
   @override
@@ -157,6 +163,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       'comm' => CommAnnouncementsScreen(api: auth.api),
       'messages' => MessagesScreen(api: auth.api),
       'students' => StudentsScreen(api: auth.api),
+      'attendance' => AttendanceEntryScreen(api: auth.api),
+      'finance' => FinanceScreen(api: auth.api),
       _ => _dashboard(user),
     };
 
@@ -228,8 +236,8 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               _item(Icons.campaign_outlined, 'Communication Center', 'comm'),
               _item(Icons.forum_outlined, 'Messages', 'messages'),
               _item(Icons.groups_outlined, 'Student Management', 'students'),
-              _soon(Icons.event_available_outlined, 'Attendance'),
-              _soon(Icons.payments_outlined, 'Finance'),
+              _item(Icons.event_available_outlined, 'Attendance', 'attendance'),
+              _item(Icons.account_balance_wallet_outlined, 'Finance', 'finance'),
             ]),
           ),
           const Divider(height: 1),
