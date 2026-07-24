@@ -6,7 +6,10 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  // Required before any async work happens ahead of runApp().
+  WidgetsFlutterBinding.ensureInitialized();
+
   // In release builds a widget-tree crash renders as a blank/grey screen.
   // Show the actual error text instead, so problems are visible and reportable.
   ErrorWidget.builder = (FlutterErrorDetails details) => Material(
@@ -30,12 +33,17 @@ void main() {
           ),
         ),
       );
+
+  // WHITE-LABEL: pull this school's name, colours and feature flags from its
+  // own portal before the first frame. Never throws — if the server can't be
+  // reached the app just uses the defaults in branding.dart.
+  await Branding.load();
+
   runApp(const OlasApp());
 }
 
 class OlasApp extends StatelessWidget {
   const OlasApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -45,7 +53,16 @@ class OlasApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
-          colorSchemeSeed: Branding.primaryColor,
+          // Server-driven brand colours (set in the portal's White-Label page).
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Branding.themePrimary,
+            primary: Branding.themePrimary,
+            secondary: Branding.themeAccent,
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: Branding.themePrimary,
+            foregroundColor: Colors.white,
+          ),
           scaffoldBackgroundColor: const Color(0xFFF5F6F8),
           inputDecorationTheme: const InputDecorationTheme(
             border: OutlineInputBorder(),
@@ -62,7 +79,6 @@ class OlasApp extends StatelessWidget {
 /// manually; they just change AuthState and this rebuilds.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
